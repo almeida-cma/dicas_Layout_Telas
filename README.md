@@ -8,3 +8,5 @@ O desenvolvimento de layouts de telas web relacionados a modelos de dados relaci
 4. Padrão de Filtros Avançados
 5. Padrão de Hierarquia (Árvore)
 6. Padrão de Wizard (Passo a Passo)
+
+* Todos os exemplos utilizando HTML, CSS e JavaScript.
