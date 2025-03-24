@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Simples com LocalStorage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-container {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .form-container {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 10px 0;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+        }
+
+        .modal .close-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .modal .close-btn:hover {
+            background-color: #e53935;
+        }
+
+        .edit-btn, .delete-btn, .details-btn {
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            color: #FFA500;
+        }
+
+        .edit-btn:hover {
+            color: #ff8c00;
+        }
+
+        .delete-btn {
+            color: #f44336;
+        }
+
+        .delete-btn:hover {
+            color: #e53935;
+        }
+
+        .details-btn {
+            color: #2196F3;
+        }
+
+        .details-btn:hover {
+            color: #0b79d0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Sistema CRUD com LocalStorage</h1>
+</header>
+
+<div class="container">
+    <button class="btn" id="btnAdd" onclick="openModal('create')">Adicionar Novo Registro</button>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="recordsTable">
+                <!-- Tabela será preenchida com os dados do LocalStorage -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Criação e Edição -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle">Adicionar Novo Registro</h2>
+        <form id="modalForm" onsubmit="saveData(event)">
+            <input type="hidden" id="recordId">
+            <input type="text" id="name" placeholder="Digite o nome" required>
+            <button type="submit" class="btn">Salvar</button>
+            <button type="button" class="close-btn" onclick="closeModal()">Fechar</button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <h2>Detalhes do Registro</h2>
+        <p><strong>ID:</strong> <span id="detailId"></span></p>
+        <p><strong>Nome:</strong> <span id="detailName"></span></p>
+        <button class="btn" onclick="printPDF()">Imprimir em PDF</button>
+        <button type="button" class="close-btn" onclick="closeDetailsModal()">Fechar</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    let records = JSON.parse(localStorage.getItem('records')) || [];
+
+    // Função para atualizar a tabela com os registros
+    function updateTable() {
+        const tableBody = document.getElementById('recordsTable');
+        tableBody.innerHTML = '';
+        records.forEach((record, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${record.id}</td>
+                <td>${record.name}</td>
+                <td>
+                    <span class="details-btn" onclick="viewDetails(${index})">Detalhes</span>
+                    <span class="edit-btn" onclick="openModal('edit', ${index})">Editar</span>
+                    <span class="delete-btn" onclick="deleteRecord(${index})">Excluir</span>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Função para abrir o modal de criação ou edição
+    function openModal(action, index = null) {
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const nameInput = document.getElementById('name');
+        const recordId = document.getElementById('recordId');
+
+        if (action === 'create') {
+            modalTitle.textContent = 'Adicionar Novo Registro';
+            nameInput.value = '';
+            recordId.value = '';
+        } else if (action === 'edit') {
+            modalTitle.textContent = 'Editar Registro';
+            nameInput.value = records[index].name;
+            recordId.value = index;
+        }
+        modal.style.display = 'flex';
+    }
+
+    // Função para fechar o modal
+    function closeModal() {
+        const modal = document.getElementById('modal');
+        modal.style.display = 'none';
+    }
+
+    // Função para salvar ou editar os dados
+    function saveData(event) {
+        event.preventDefault();
+
+        const nameInput = document.getElementById('name');
+        const recordId = document.getElementById('recordId');
+        const name = nameInput.value.trim();
+
+        if (recordId.value === '') {
+            // Criação de novo registro
+            const newRecord = {
+                id: Date.now(),
+                name
+            };
+            records.push(newRecord);
+        } else {
+            // Edição de registro existente
+            const index = recordId.value;
+            records[index].name = name;
+        }
+
+        // Atualizar o LocalStorage e a tabela
+        localStorage.setItem('records', JSON.stringify(records));
+        updateTable();
+        closeModal();
+    }
+
+    // Função para excluir um registro
+    function deleteRecord(index) {
+        if (confirm('Tem certeza que deseja excluir este registro?')) {
+            records.splice(index, 1);
+            localStorage.setItem('records', JSON.stringify(records));
+            updateTable();
+        }
+    }
+
+    // Função para visualizar os detalhes de um registro
+    function viewDetails(index) {
+        const record = records[index];
+        document.getElementById('detailId').textContent = record.id;
+        document.getElementById('detailName').textContent = record.name;
+
+        const detailsModal = document.getElementById('detailsModal');
+        detailsModal.style.display = 'flex';
+    }
+
+    // Função para imprimir os detalhes em PDF
+    function printPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const id = document.getElementById('detailId').textContent;
+        const name = document.getElementById('detailName').textContent;
+
+        doc.text(`ID: ${id}`, 10, 10);
+        doc.text(`Nome: ${name}`, 10, 20);
+        doc.save('detalhes.pdf');
+    }
+
+    // Função para fechar o modal de detalhes
+    function closeDetailsModal() {
+        const detailsModal = document.getElementById('detailsModal');
+        detailsModal.style.display = 'none';
+    }
+
+    // Inicializa a tabela com os dados armazenados no LocalStorage
+    updateTable();
+</script>
+
+</body>
+</html>

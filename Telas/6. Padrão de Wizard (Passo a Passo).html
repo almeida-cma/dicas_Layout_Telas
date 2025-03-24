@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wizard - Passo a Passo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        .progress {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .progress div {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ccc;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+        }
+        .progress .active {
+            background: #28a745;
+            color: white;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress">
+            <div class="step-indicator active">1</div>
+            <div class="step-indicator">2</div>
+            <div class="step-indicator">3</div>
+        </div>
+
+        <div class="step active" id="step-1">
+            <h3>Passo 1</h3>
+            <p>Informe seu nome:</p>
+            <input type="text" id="name" placeholder="Seu nome" oninput="updateConfirmation()">
+        </div>
+        
+        <div class="step" id="step-2">
+            <h3>Passo 2</h3>
+            <p>Informe seu email:</p>
+            <input type="email" id="email" placeholder="Seu email" oninput="updateConfirmation()">
+        </div>
+        
+        <div class="step" id="step-3">
+            <h3>Passo 3</h3>
+            <p>Confirme seus dados e finalize.</p>
+            <p><strong>Nome:</strong> <span id="confirm-name"></span></p>
+            <p><strong>Email:</strong> <span id="confirm-email"></span></p>
+        </div>
+        
+        <div class="buttons">
+            <button id="prev" disabled>Voltar</button>
+            <button id="next">Próximo</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const steps = document.querySelectorAll(".step");
+        const indicators = document.querySelectorAll(".step-indicator");
+        const prevButton = document.getElementById("prev");
+        const nextButton = document.getElementById("next");
+
+        function updateSteps() {
+            steps.forEach((step, index) => {
+                step.classList.toggle("active", index === currentStep);
+                indicators[index].classList.toggle("active", index === currentStep);
+            });
+            prevButton.disabled = currentStep === 0;
+            nextButton.textContent = currentStep === steps.length - 1 ? "Finalizar" : "Próximo";
+        }
+
+        function updateConfirmation() {
+            document.getElementById("confirm-name").textContent = document.getElementById("name").value || "Não informado";
+            document.getElementById("confirm-email").textContent = document.getElementById("email").value || "Não informado";
+        }
+
+        nextButton.addEventListener("click", () => {
+            if (currentStep === steps.length - 1) {
+                alert("Cadastro finalizado!");
+                resetForm();
+                return;
+            }
+            currentStep++;
+            updateSteps();
+        });
+
+        prevButton.addEventListener("click", () => {
+            currentStep--;
+            updateSteps();
+        });
+
+        function resetForm() {
+            document.getElementById("name").value = "";
+            document.getElementById("email").value = "";
+            updateConfirmation();
+            currentStep = 0;
+            updateSteps();
+        }
+    </script>
+</body>
+</html>

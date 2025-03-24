@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hierarquia de Categorias</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .breadcrumb {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #ddd;
+            border-radius: 5px;
+        }
+        .tree ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        .tree li {
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        .toggle::before {
+            content: "▶ ";
+            font-size: 14px;
+        }
+        .toggle.open::before {
+            content: "▼ ";
+        }
+        .hidden {
+            display: none;
+        }
+        .product-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="breadcrumb" id="breadcrumb">Home</div>
+    <div class="tree">
+        <ul>
+            <li class="toggle">Categorias
+                <ul class="hidden">
+                    <li class="toggle">Eletrônicos
+                        <ul class="hidden">
+                            <li class="product">Celulares</li>
+                            <li class="product">Notebooks</li>
+                            <li class="product">Tablets</li>
+                        </ul>
+                    </li>
+                    <li class="toggle">Roupas
+                        <ul class="hidden">
+                            <li class="product">Masculinas</li>
+                            <li class="product">Femininas</li>
+                            <li class="product">Infantis</li>
+                        </ul>
+                    </li>
+                    <li class="toggle">Móveis
+                        <ul class="hidden">
+                            <li class="product">Sofás</li>
+                            <li class="product">Mesas</li>
+                            <li class="product">Cadeiras</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="product-info" id="product-info">
+        <h3 id="product-title"></h3>
+        <p>Detalhes sobre o produto selecionado.</p>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggles = document.querySelectorAll(".toggle");
+            const breadcrumb = document.getElementById("breadcrumb");
+            const productItems = document.querySelectorAll(".product");
+            const productInfo = document.getElementById("product-info");
+            const productTitle = document.getElementById("product-title");
+            
+            toggles.forEach(toggle => {
+                toggle.addEventListener("click", function(event) {
+                    event.stopPropagation();
+                    this.classList.toggle("open");
+                    let sublist = this.querySelector("ul");
+                    if (sublist) {
+                        sublist.classList.toggle("hidden");
+                    }
+                    updateBreadcrumb(this);
+                    productInfo.style.display = "none";
+                });
+            });
+            
+            productItems.forEach(product => {
+                product.addEventListener("click", function(event) {
+                    event.stopPropagation();
+                    updateBreadcrumb(this);
+                    productTitle.textContent = this.textContent;
+                    productInfo.style.display = "block";
+                });
+            });
+            
+            function updateBreadcrumb(element) {
+                let path = ["Home"];
+                while (element) {
+                    path.push(element.firstChild.textContent.trim());
+                    element = element.parentElement.closest(".toggle");
+                }
+                breadcrumb.textContent = path.reverse().join(" > ");
+            }
+        });
+    </script>
+</body>
+</html>

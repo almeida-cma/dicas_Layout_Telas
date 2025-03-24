@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Pedidos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body { padding: 20px; }
+        .pedido-card { margin-bottom: 20px; }
+        .pedido-itens { margin-left: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Gerenciamento de Pedidos</h1>
+        <button class="btn btn-primary" onclick="abrirModalPedido()">Adicionar Pedido</button>
+        <div id="pedidos-container" class="mt-4"></div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Pedido -->
+    <div class="modal" id="pedidoModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Gerenciar Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="pedidoId">
+                    <label>Nome do Pedido:</label>
+                    <input type="text" id="pedidoNome" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" onclick="salvarPedido()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Item -->
+    <div class="modal" id="itemModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Gerenciar Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="itemPedidoId">
+                    <input type="hidden" id="itemId">
+                    <label>Nome do Item:</label>
+                    <input type="text" id="itemNome" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" onclick="salvarItem()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação para Remover Pedido -->
+    <div class="modal" id="confirmarRemoverPedidoModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Você tem certeza que deseja excluir este pedido?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" id="confirmarRemoverPedidoBtn">Excluir</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação para Remover Item -->
+    <div class="modal" id="confirmarRemoverItemModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Você tem certeza que deseja excluir este item?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" id="confirmarRemoverItemBtn">Excluir</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+
+        function renderizarPedidos() {
+            const container = document.getElementById("pedidos-container");
+            container.innerHTML = "";
+            pedidos.forEach((pedido, index) => {
+                const card = document.createElement("div");
+                card.className = "card pedido-card";
+                card.innerHTML = `
+                    <div class="card-body">
+                        <h5 class="card-title">${pedido.nome}</h5>
+                        <button class="btn btn-warning btn-sm" onclick="editarPedido(${index})">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="abrirConfirmarRemoverPedidoModal(${index})">Remover</button>
+                        <button class="btn btn-info btn-sm" onclick="abrirModalItem(${index})">Adicionar Item</button>
+                        <ul class="list-group mt-2">
+                            ${pedido.itens.map((item, i) => `
+                                <li class="list-group-item d-flex justify-content-between">
+                                    ${item.nome}
+                                    <span>
+                                        <button class="btn btn-sm btn-warning" onclick="editarItem(${index}, ${i})">Editar</button>
+                                        <button class="btn btn-sm btn-danger" onclick="abrirConfirmarRemoverItemModal(${index}, ${i})">Remover</button>
+                                    </span>
+                                </li>`).join("")}
+                        </ul>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            localStorage.setItem('pedidos', JSON.stringify(pedidos));
+        }
+
+        function abrirModalPedido() {
+            document.getElementById("pedidoId").value = "";
+            document.getElementById("pedidoNome").value = "";
+            new bootstrap.Modal(document.getElementById("pedidoModal")).show();
+        }
+
+        function salvarPedido() {
+            const id = document.getElementById("pedidoId").value;
+            const nome = document.getElementById("pedidoNome").value;
+            if (id) {
+                pedidos[id].nome = nome;
+            } else {
+                pedidos.push({ nome, itens: [] });
+            }
+            renderizarPedidos();
+            bootstrap.Modal.getInstance(document.getElementById("pedidoModal")).hide();
+        }
+
+        function editarPedido(index) {
+            document.getElementById("pedidoId").value = index;
+            document.getElementById("pedidoNome").value = pedidos[index].nome;
+            new bootstrap.Modal(document.getElementById("pedidoModal")).show();
+        }
+
+        function abrirConfirmarRemoverPedidoModal(index) {
+            const confirmarBtn = document.getElementById("confirmarRemoverPedidoBtn");
+            confirmarBtn.onclick = () => removerPedido(index);
+            new bootstrap.Modal(document.getElementById("confirmarRemoverPedidoModal")).show();
+        }
+
+        function removerPedido(index) {
+            pedidos.splice(index, 1);
+            renderizarPedidos();
+            bootstrap.Modal.getInstance(document.getElementById("confirmarRemoverPedidoModal")).hide();
+        }
+
+        function abrirModalItem(pedidoIndex) {
+            document.getElementById("itemPedidoId").value = pedidoIndex;
+            document.getElementById("itemId").value = "";
+            document.getElementById("itemNome").value = "";
+            new bootstrap.Modal(document.getElementById("itemModal")).show();
+        }
+
+        function salvarItem() {
+            const pedidoIndex = document.getElementById("itemPedidoId").value;
+            const itemId = document.getElementById("itemId").value;
+            const itemNome = document.getElementById("itemNome").value;
+            if (itemId) {
+                pedidos[pedidoIndex].itens[itemId].nome = itemNome;
+            } else {
+                pedidos[pedidoIndex].itens.push({ nome: itemNome });
+            }
+            renderizarPedidos();
+            bootstrap.Modal.getInstance(document.getElementById("itemModal")).hide();
+        }
+
+        function editarItem(pedidoIndex, itemIndex) {
+            document.getElementById("itemPedidoId").value = pedidoIndex;
+            document.getElementById("itemId").value = itemIndex;
+            document.getElementById("itemNome").value = pedidos[pedidoIndex].itens[itemIndex].nome;
+            new bootstrap.Modal(document.getElementById("itemModal")).show();
+        }
+
+        function abrirConfirmarRemoverItemModal(pedidoIndex, itemIndex) {
+            const confirmarBtn = document.getElementById("confirmarRemoverItemBtn");
+            confirmarBtn.onclick = () => removerItem(pedidoIndex, itemIndex);
+            new bootstrap.Modal(document.getElementById("confirmarRemoverItemModal")).show();
+        }
+
+        function removerItem(pedidoIndex, itemIndex) {
+            pedidos[pedidoIndex].itens.splice(itemIndex, 1);
+            renderizarPedidos();
+            bootstrap.Modal.getInstance(document.getElementById("confirmarRemoverItemModal")).hide();
+        }
+
+        renderizarPedidos();
+    </script>
+</body>
+</html>
